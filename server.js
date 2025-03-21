@@ -2,9 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
-const port = process.env.PORT || 3000; // Use Render's port or default to 3000
+const port = process.env.PORT || 3000;
 
 // Enable CORS
 app.use(cors());
@@ -22,18 +23,21 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Create the 'uploads' directory if it doesn't exist
-const fs = require('fs');
 const dir = './uploads';
 if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
 }
+
+// Serve static files from the 'uploads' folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Define the upload endpoint
 app.post('/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
-    res.send(`File uploaded: ${req.file.filename}`);
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.send(`File uploaded: <a href="${fileUrl}">${fileUrl}</a>`);
 });
 
 // Start the server
