@@ -40,6 +40,23 @@ app.post('/upload', upload.single('file'), (req, res) => {
     res.send(`File uploaded: <a href="${fileUrl}">${fileUrl}</a>`);
 });
 
+// Define the dashboard endpoint
+app.get('/dashboard', (req, res) => {
+    fs.readdir(dir, (err, files) => {
+        if (err) {
+            return res.status(500).send('Unable to scan files.');
+        }
+        const fileUrls = files.map(file => `${req.protocol}://${req.get('host')}/uploads/${file}`);
+        const html = `
+            <h1>Uploaded Images</h1>
+            <ul>
+                ${fileUrls.map(url => `<li><a href="${url}" target="_blank"><img src="${url}" width="200" /></a></li>`).join('')}
+            </ul>
+        `;
+        res.send(html);
+    });
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
