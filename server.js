@@ -40,8 +40,72 @@ app.post('/upload', upload.single('file'), (req, res) => {
     res.send(`File uploaded: <a href="${fileUrl}">${fileUrl}</a>`);
 });
 
-// Define the dashboard endpoint
+// Password-protected dashboard
 app.get('/dashboard', (req, res) => {
+    const password = req.query.password;
+    if (password !== '2414') {
+        return res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Login</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f4;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                    }
+                    .login-box {
+                        background-color: #fff;
+                        padding: 20px;
+                        border-radius: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        text-align: center;
+                    }
+                    .login-box input {
+                        padding: 10px;
+                        margin: 10px 0;
+                        width: 100%;
+                        border: 1px solid #ccc;
+                        border-radius: 5px;
+                    }
+                    .login-box button {
+                        padding: 10px 20px;
+                        background-color: #007bff;
+                        color: #fff;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }
+                    .login-box button:hover {
+                        background-color: #0056b3;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="login-box">
+                    <h2>Enter Password</h2>
+                    <input type="password" id="password" placeholder="Password" />
+                    <button onclick="checkPassword()">Submit</button>
+                </div>
+                <script>
+                    function checkPassword() {
+                        const password = document.getElementById('password').value;
+                        window.location.href = '/dashboard?password=' + password;
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+    }
+
+    // If password is correct, show the dashboard
     fs.readdir(dir, (err, files) => {
         if (err) {
             return res.status(500).send('Unable to scan files.');
@@ -79,6 +143,7 @@ app.get('/dashboard', (req, res) => {
                         background-color: #fff;
                         width: 200px;
                         text-align: center;
+                        cursor: pointer;
                     }
                     .image-card img {
                         max-width: 100%;
@@ -108,11 +173,11 @@ app.get('/dashboard', (req, res) => {
                 <h1>Uploaded Images</h1>
                 <div class="image-container">
                     ${fileUrls.map(file => `
-                        <div class="image-card">
+                        <div class="image-card" onclick="toggleCheckbox('${file.filename}')">
                             <a href="${file.url}" target="_blank">
                                 <img src="${file.url}" alt="${file.filename}" />
                             </a>
-                            <input type="checkbox" name="selectedImages" value="${file.filename}" />
+                            <input type="checkbox" id="${file.filename}" name="selectedImages" value="${file.filename}" />
                         </div>
                     `).join('')}
                 </div>
@@ -120,6 +185,11 @@ app.get('/dashboard', (req, res) => {
                     <button onclick="deleteSelectedImages()">Delete Selected</button>
                 </div>
                 <script>
+                    function toggleCheckbox(filename) {
+                        const checkbox = document.getElementById(filename);
+                        checkbox.checked = !checkbox.checked;
+                    }
+
                     function deleteSelectedImages() {
                         const selectedImages = Array.from(document.querySelectorAll('input[name="selectedImages"]:checked'))
                             .map(checkbox => checkbox.value);
